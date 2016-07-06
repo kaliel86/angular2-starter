@@ -1,6 +1,11 @@
 export const config = {
     dev: {
-        root: 'src'
+        root: 'src',
+        tsFiles: 'src/**/*.ts',
+        resources: [
+            'src/**/*',
+            '!**/*.ts'
+        ]
     },
     prod: {
         root: 'app',
