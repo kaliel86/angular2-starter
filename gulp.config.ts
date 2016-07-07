@@ -8,8 +8,9 @@ export const config = {
         ]
     },
     prod: {
-        root: 'app',
-        jsFiles: 'app/**/*.js',
-        htmlFiles: 'app/**/*.html'
+        root: 'build',
+        jsFiles: 'build/**/*.js',
+        htmlFiles: 'build/**/*.html',
+        lib: 'build/lib'
     }
 };

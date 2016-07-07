@@ -6,6 +6,7 @@ const sourcemaps = require('gulp-sourcemaps');
 const tsProject = tsc.createProject("tsconfig.json");
 const tslint = require('gulp-tslint');
 const replace = require('gulp-replace');
+const domSrc = require('gulp-dom-src');
 
 import {config} from './gulp.config';
 
@@ -37,27 +38,41 @@ gulp.task("resources", () => {
         .pipe(gulp.dest(config.prod.root));
 });
 
+
 /**
- * Copy all required libraries into build directory.
+ * Compile TypeScript sources and create sourcemaps in build directory.
  */
-gulp.task("libs", () => {
-    return gulp.src([
-            'es6-shim/es6-shim.min.js',
-            'systemjs/dist/system-polyfills.js',
-            'systemjs/dist/system.src.js',
-            'reflect-metadata/Reflect.js',
-            'rxjs/**',
-            'zone.js/dist/**',
-            '@angular/**'
-        ], {cwd: "node_modules/**"}) /* Glob required here. */
-        .pipe(gulp.dest(dest.libs));
+gulp.task("compile", ["tslint"], () => {
+    let tsResult = gulp.src(config.dev.tsFiles)
+        .pipe(sourcemaps.init())
+        .pipe(tsc(tsProject));
+    return tsResult.js
+        .pipe(sourcemaps.write("."))
+        .pipe(gulp.dest(config.prod.root));
 });
+
+
+
+/**
+* Move node_modules script files to build directory
+*/
+gulp.task('libs', () => {
+    return domSrc(
+        {
+            file: config.dev.root + '/index.html',
+            selector: 'script',
+            attribute: 'src'
+        })
+        .pipe(gulp.dest(config.prod.lib));
+});
+
+
 
 
 /**
  * Build the project.
  */
-gulp.task('build', () => {
+gulp.task('build', ['compile', 'resources'], () => {
     console.log("Building the project ...");
 
     browserSync.init({
@@ -65,7 +80,7 @@ gulp.task('build', () => {
         files: ['index.html', 'app/**/*.js', 'app/**/*.html'],
         injectChanges: true,
         logFileChanges: false,
-        logLevel: 'silent',    
+        logLevel: 'silent',
         notify: true,
         reloadDelay: 0,
         server: {
@@ -76,5 +91,5 @@ gulp.task('build', () => {
 
 
 gulp.task('default', ['build'], () => {
-   
+
 });
