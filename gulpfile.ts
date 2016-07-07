@@ -6,7 +6,6 @@ const sourcemaps = require('gulp-sourcemaps');
 const tsProject = tsc.createProject("tsconfig.json");
 const tslint = require('gulp-tslint');
 const replace = require('gulp-replace');
-const domSrc = require('gulp-dom-src');
 
 import {config} from './gulp.config';
 
@@ -54,25 +53,32 @@ gulp.task("compile", ["tslint"], () => {
 
 
 /**
-* Move node_modules script files to build directory
-*/
-gulp.task('libs', () => {
-    return domSrc(
-        {
-            file: config.dev.root + '/index.html',
-            selector: 'script',
-            attribute: 'src'
-        })
+ * Copy all required libraries into build directory.
+ */
+gulp.task("libs", () => {
+    return gulp.src([
+        'core-js/client/shim.min.js',
+        'zone.js/dist/zone.js',
+        'reflect-metadata/Reflect.js',
+        'systemjs/dist/system.src.js',
+        'rxjs/**',
+        'zone.js/dist/**',
+        '@angular/**'
+    ], { cwd: "node_modules/**" }) /* Glob required here. */
         .pipe(gulp.dest(config.prod.lib));
 });
 
-
+gulp.task('updateResources', ['libs','resources'], () => {
+    return gulp.src(config.dev.root + '/index.html')
+        .pipe(replace('node_modules/', 'lib/'))
+        .pipe(gulp.dest(config.prod.root));
+});
 
 
 /**
  * Build the project.
  */
-gulp.task('build', ['compile', 'resources'], () => {
+gulp.task('build', ['compile', 'updateResources'], () => {
     console.log("Building the project ...");
 
     browserSync.init({
